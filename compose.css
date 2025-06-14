@@ -1,0 +1,29 @@
+/* Quote level 1 - Blue color */
+blockquote[type="cite"]:not(blockquote[type="cite"] blockquote[type="cite"]) {
+  color: #3366ff !important;
+}
+
+/* Quote level 2 and deeper - Purple color */
+blockquote[type="cite"] blockquote[type="cite"] {
+  color: #a07c9f !important;
+}
+
+/* Alternative selectors for different quote formats */
+.moz-cite-prefix,
+.moz-forward-container blockquote {
+  color: #3366ff !important;
+}
+
+.moz-cite-prefix blockquote,
+.moz-forward-container blockquote blockquote {
+  color: #a07c9f !important;
+}
+
+/* Handle quoted text spans */
+span[style*="color: rgb(0, 0, 255)"] {
+  color: #3366ff !important;
+}
+
+span[style*="color: rgb(128, 0, 128)"] {
+  color: #a07c9f !important;
+}

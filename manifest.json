@@ -1,0 +1,22 @@
+{
+  "manifest_version": 2,
+  "name": "Quote Color",
+  "description": "Automatically colors quoted text in compose windows - Level 1: #3366ff, Level 2+: #a07c9f",
+  "version": "1.0",
+  "author": "Jeroen",
+  "browser_specific_settings": {
+    "gecko": {
+      "id": "quote-color@example.com",
+      "strict_min_version": "128.0"
+    }
+  },
+  "background": {
+    "page": "background.html"
+  },
+  "permissions": [
+    "compose"
+  ],
+  "icons": {
+    "48": "icon.svg"
+  }
+}
