@@ -26,6 +26,9 @@ function applyQuoteColors() {
     
     // Apply style to the blockquote itself
     blockquote.style.color = color;
+    blockquote.style.borderLeft = `3px solid ${color}`;
+    blockquote.style.paddingLeft = '10px';
+    blockquote.style.marginLeft = '0';
     
     // Also apply to all child elements that don't have their own blockquote
     const childElements = blockquote.querySelectorAll('*:not(blockquote)');
