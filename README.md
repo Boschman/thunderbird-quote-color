@@ -1,12 +1,24 @@
 # Quote Color for Thunderbird
 
-A Thunderbird extension that automatically colors quoted text in compose windows.
+A Thunderbird extension that automatically adds color to quoted text in emails using inline styles, ensuring compatibility with all email clients.
 
 ## Features
 
 - Quote level 1: Blue (#3366ff)
 - Quote level 2 and deeper: Purple (#a07c9f)
-- Automatically applies when composing or replying to emails
+- Colors are added as inline styles to the HTML, ensuring they appear in all email clients
+- Automatically applies when composing, replying to, or forwarding emails
+- Dynamic updates when pasting quoted content
+
+## How it works
+
+The extension injects a content script into compose windows that:
+1. Finds all quoted text (blockquote elements)
+2. Determines the nesting level of each quote
+3. Applies inline style attributes with the appropriate color
+4. Monitors for changes to update colors dynamically
+
+The inline styles are included in the sent email HTML, so recipients see the colored quotes regardless of their email client's CSS support.
 
 ## Installation
 
@@ -20,7 +32,7 @@ A Thunderbird extension that automatically colors quoted text in compose windows
 To create the installable .xpi file:
 
 ```bash
-zip -r quote-color.xpi manifest.json background.html background.js compose.css icon.svg
+zip -r quote-color.xpi manifest.json background.html background.js compose-script.js icon.svg
 ```
 
 ## Development
