@@ -4,7 +4,17 @@
       "mcp__context7__resolve-library-id",
       "mcp__context7__get-library-docs",
       "Bash(convert:*)",
-      "Bash(zip:*)"
+      "Bash(zip:*)",
+      "WebSearch",
+      "WebFetch(domain:www.thunderbird.net)",
+      "WebFetch(domain:webextension-api.thunderbird.net)",
+      "WebFetch(domain:thunderbird.topicbox.com)",
+      "WebFetch(domain:github.com)",
+      "WebFetch(domain:bugzilla.mozilla.org)",
+      "WebFetch(domain:hg.mozilla.org)",
+      "WebFetch(domain:searchfox.org)",
+      "WebFetch(domain:hg-edge.mozilla.org)",
+      "Bash(unzip -l dist/quote-color.xpi)"
     ],
     "deny": []
   }

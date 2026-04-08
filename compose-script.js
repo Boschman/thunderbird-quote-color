@@ -24,8 +24,11 @@ function applyQuoteColors() {
     // Level 1+ = second level and deeper (purple)
     const color = level === 0 ? '#3366ff' : '#a07c9f';
     
-    // Apply style to the blockquote itself
-    blockquote.style.color = color;
+    // Apply style to the blockquote itself.
+    // Since Thunderbird 149 (bug 2018015), messageQuotes.css applies
+    // `color: var(--color-text-highlight) !important` to blockquote[type="cite"],
+    // so we must use setProperty with 'important' to override it.
+    blockquote.style.setProperty('color', color, 'important');
     blockquote.style.borderLeft = `3px solid ${color}`;
     blockquote.style.paddingLeft = '10px';
     blockquote.style.marginLeft = '0';
