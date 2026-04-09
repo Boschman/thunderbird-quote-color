@@ -1,116 +1,91 @@
-// Function to determine the quote level of a blockquote element
+// Determine the quote nesting level (0 = top level, 1 = nested once, …)
 function getQuoteLevel(element) {
   let level = 0;
   let parent = element.parentElement;
-  
   while (parent) {
     if (parent.tagName === 'BLOCKQUOTE' && parent.getAttribute('type') === 'cite') {
       level++;
     }
     parent = parent.parentElement;
   }
-  
   return level;
 }
 
-// Function to apply colors to all blockquotes
+// Apply colors to all quoted blockquotes.
 function applyQuoteColors() {
   const blockquotes = document.querySelectorAll('blockquote[type="cite"]');
-  
-  blockquotes.forEach(blockquote => {
-    const level = getQuoteLevel(blockquote);
-    
-    // Level 0 = first level quote (blue)
-    // Level 1+ = second level and deeper (purple)
+
+  blockquotes.forEach(bq => {
+    const level = getQuoteLevel(bq);
     const color = level === 0 ? '#3366ff' : '#a07c9f';
-    
-    // Apply style to the blockquote itself.
-    // Since Thunderbird 149 (bug 2018015), messageQuotes.css applies
-    // `color: var(--color-text-highlight) !important` to blockquote[type="cite"],
-    // so we must use setProperty with 'important' to override it.
-    blockquote.style.setProperty('color', color, 'important');
-    blockquote.style.borderLeft = `3px solid ${color}`;
-    blockquote.style.paddingLeft = '10px';
-    blockquote.style.marginLeft = '0';
-    
-    // Also apply to all child elements that don't have their own blockquote
-    const childElements = blockquote.querySelectorAll('*:not(blockquote)');
-    childElements.forEach(child => {
-      // Only apply if this element is not inside a nested blockquote
-      let hasBlockquoteParent = false;
-      let checkParent = child.parentElement;
-      while (checkParent && checkParent !== blockquote) {
-        if (checkParent.tagName === 'BLOCKQUOTE') {
-          hasBlockquoteParent = true;
-          break;
-        }
-        checkParent = checkParent.parentElement;
+
+    // (1) Inline styles on the <blockquote> itself.
+    //     Purpose: the SENT email's wire HTML carries these, so the recipient
+    //     (whose mail client does NOT load TB's messageQuotes.css) sees the
+    //     blockquote in the right color and with the colored left border.
+    bq.style.setProperty('color', color, 'important');
+    bq.style.setProperty('border-left', `3px solid ${color}`, 'important');
+    bq.style.setProperty('padding-left', '10px', 'important');
+    bq.style.setProperty('margin-left', '0', 'important');
+
+    // (2) Wrapper <div> for the EDITOR display.
+    //     TB 149 added (bug 2018015):
+    //
+    //       body blockquote[type="cite"] {
+    //         color: var(--color-text-highlight) !important;
+    //       }
+    //
+    //     to messageQuotes.css, which the editor loads at the USER cascade
+    //     origin. User !important beats author !important (including inline),
+    //     so the setProperty above does NOT win the editor's cascade for
+    //     `color`. The variable is undefined in the editor's content scope,
+    //     so the value resolves to `unset` → "inherit from parent" → the
+    //     editor body's default (black in light mode).
+    //
+    //     Workaround: wrap the blockquote's children in a <div class="qc-wrap">
+    //     with the desired color. The div is NOT a blockquote, so the rule
+    //     doesn't reach it; its descendants inherit the div's color and the
+    //     editor renders them correctly.
+    let wrapper = bq.firstElementChild;
+    if (!wrapper || !wrapper.classList || !wrapper.classList.contains('qc-wrap')) {
+      wrapper = document.createElement('div');
+      wrapper.className = 'qc-wrap';
+      while (bq.firstChild) {
+        wrapper.appendChild(bq.firstChild);
       }
-      
-      if (!hasBlockquoteParent) {
-        child.style.color = color;
-      }
-    });
+      bq.appendChild(wrapper);
+    }
+    wrapper.style.setProperty('color', color, 'important');
   });
-  
-  // Also handle any quote prefixes or other quote indicators
-  const quotePrefixes = document.querySelectorAll('.moz-cite-prefix');
-  quotePrefixes.forEach(prefix => {
-    prefix.style.color = '#3366ff';
+
+  // Quote prefixes and forward containers — not subject to messageQuotes.css's
+  // !important, so plain inline color is enough.
+  document.querySelectorAll('.moz-cite-prefix').forEach(p => {
+    p.style.setProperty('color', '#3366ff', 'important');
   });
-  
-  // Handle forward containers
-  const forwardContainers = document.querySelectorAll('.moz-forward-container');
-  forwardContainers.forEach(container => {
-    if (!container.querySelector('blockquote[type="cite"]')) {
-      container.style.color = '#3366ff';
+  document.querySelectorAll('.moz-forward-container').forEach(c => {
+    if (!c.querySelector('blockquote[type="cite"]')) {
+      c.style.setProperty('color', '#3366ff', 'important');
     }
   });
 }
 
-// Apply colors on initial load
+// Initial pass
 applyQuoteColors();
 
-// Set up an observer to handle dynamic content changes
-const observer = new MutationObserver((mutations) => {
-  // Check if any mutations affect blockquotes
-  let needsUpdate = false;
-  
-  for (const mutation of mutations) {
-    if (mutation.type === 'childList') {
-      // Check if blockquotes were added or removed
-      const addedBlockquotes = Array.from(mutation.addedNodes).some(node => 
-        node.nodeType === 1 && (node.tagName === 'BLOCKQUOTE' || node.querySelector?.('blockquote'))
-      );
-      const removedBlockquotes = Array.from(mutation.removedNodes).some(node => 
-        node.nodeType === 1 && (node.tagName === 'BLOCKQUOTE' || node.querySelector?.('blockquote'))
-      );
-      
-      if (addedBlockquotes || removedBlockquotes) {
-        needsUpdate = true;
-        break;
-      }
-    }
-  }
-  
-  if (needsUpdate) {
+// Reactive: react to any DOM mutation, debounced via requestAnimationFrame.
+let pendingUpdate = false;
+function scheduleUpdate() {
+  if (pendingUpdate) return;
+  pendingUpdate = true;
+  requestAnimationFrame(() => {
+    pendingUpdate = false;
     applyQuoteColors();
-  }
-});
+  });
+}
 
-// Start observing the document body for changes
-observer.observe(document.body, {
-  childList: true,
-  subtree: true
-});
+const observer = new MutationObserver(scheduleUpdate);
+observer.observe(document.body, { childList: true, subtree: true });
 
-// Also apply colors whenever the compose window gains focus
-// This helps ensure colors are applied after any paste operations
 window.addEventListener('focus', applyQuoteColors);
-
-// Apply colors on any paste events
-document.addEventListener('paste', () => {
-  setTimeout(applyQuoteColors, 100);
-});
-
-console.log('Quote Color compose script loaded');
+document.addEventListener('paste', () => setTimeout(applyQuoteColors, 100));
